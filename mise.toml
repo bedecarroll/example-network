@@ -1,0 +1,20 @@
+min_version = '2024.11.1'
+
+[tools]
+pre-commit = "latest"
+ruff = "latest"
+typos = "latest"
+uv = "latest"
+"ubi:bedecarroll/cfgcut" = "latest"
+"ubi:mitsuhiko/minijinja" = "latest"
+
+[settings]
+python.uv_venv_auto = true
+
+[tasks.lint]
+description = "Run linters"
+run = ["typos --diff", "ruff check"]
+
+[tasks.lint-fix]
+description = "Run linters"
+run = ["typos -w", "ruff check --fix"]

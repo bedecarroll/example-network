@@ -1,0 +1,38 @@
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** Example inbound
+         */
+        replace: filter inbound {
+            interface-specific;
+            /*
+             ** Accept connections to our web servers
+             */
+            term accept-web-servers {
+                from {
+                    destination-address {
+                        /* Web Server 1 */
+                        10.0.0.1/32;
+                        /* Web Server 2 */
+                        10.0.0.2/32;
+                    }
+                    protocol tcp;
+                    destination-port [ 80 443 ];
+                }
+                then accept;
+            }
+            /*
+             ** Deny anything else.
+             */
+            term default-deny {
+                then {
+                    discard;
+                }
+            }
+        }
+    }
+}

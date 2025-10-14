@@ -1,0 +1,16 @@
+filters:
+  - header:
+      comment: Example inbound
+      targets:
+        cisco: inbound extended
+        juniper: inbound
+    terms:
+      - name: accept-web-servers
+        comment: Accept connections to our web servers
+        destination-address: WEB_SERVERS
+        destination-port: WEB
+        protocol: tcp
+        action: accept
+      - name: default-deny
+        comment: Deny anything else.
+        action: deny

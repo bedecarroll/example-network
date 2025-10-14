@@ -1,0 +1,53 @@
+[project]
+description = "Example network automation repository"
+name = "netauto-example"
+version = "0.0.1"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["typer", "rich", "loguru", "icecream", "aerleon", "minijinja"]
+authors = [{ name = "Bede Carroll" }]
+maintainers = [{ name = "Bede Carroll" }]
+
+[dependency-groups]
+dev = ["pytest", "coverage", "pytest-randomly", "logot[loguru]"]
+
+[tool.pytest.ini_options]
+logot_capturer = "logot.loguru.LoguruCapturer"
+
+[tool.ruff]
+exclude = ["alembic"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "ANN401", # Any is fine, actually
+  "FIX002", #Todos aren't errors
+  "TD003",  # Todos don't all have links
+  "E501",   # Line length is handled by ruff
+  "B904",   # Allow raising exceptions with from e, for HTTPException
+  "D203",   # Prefer no blank line before class
+  "D213",   # D212 looks better
+  "COM812", # Ruff recommends disabling this as it impacts formatter
+  "ISC001", # Ruff recommends disabling this as it impacts formatter
+  "EXE003", # UV based script won't have python in the shebang
+  "G004",   # f-string in log line perf issue isn't a big deal
+]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint.extend-per-file-ignores]
+"tests/**/*.py" = [
+  # https://github.com/astral-sh/ruff/issues/4368#issuecomment-2245567481
+  "S101",    # asserts allowed in tests
+  "ARG",     # Unused function args -> fixtures nevertheless are functionally relevant...
+  "FBT",     # Don't care about booleans as positional arguments in tests, e.g. via @pytest.mark.parametrize()
+  "PLR2004", # Magic value used in comparison
+  "S311",    # Pseudo-random generators are fine in tests
+]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+exclude_also = ["if __name__ == .__main__.:"]
