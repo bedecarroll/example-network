@@ -36,3 +36,32 @@ firewall {
         }
     }
 }
+firewall {
+    family inet {
+        /*
+         ** $Id:$
+         ** $Date:$
+         ** $Revision:$
+         **
+         ** Example outbound
+         */
+        replace: filter outbound {
+            interface-specific;
+            term deny-bad-destinations {
+                from {
+                    destination-address {
+                        10.0.0.0/8;
+                        172.16.0.0/12;
+                        192.168.0.0/16;
+                    }
+                }
+                then {
+                    discard;
+                }
+            }
+            term default-accept {
+                then accept;
+            }
+        }
+    }
+}

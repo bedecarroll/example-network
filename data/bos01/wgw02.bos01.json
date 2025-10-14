@@ -1,0 +1,26 @@
+{
+  "$schema": "../schema",
+  "hostname": "wgw02.bos01",
+  "domain": "example.com",
+  "role": "wan-gateway",
+  "vendor": "cisco",
+  "os": "ios",
+  "tags": [
+    "drained"
+  ],
+  "timezone": "America/New_York",
+  "interfaces": {
+    "GigabitEthernet1/1": {
+      "ipv4": "10.0.0.2/24",
+      "role": "uplink"
+    },
+    "GigabitEthernet1/2": {
+      "ipv4": "10.0.0.1/24",
+      "role": "uplink"
+    },
+    "Vlan12": {
+      "ipv4": "10.1.1.21/20",
+      "role": "security"
+    }
+  }
+}

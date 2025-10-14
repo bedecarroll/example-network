@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schema/device.json",
+  "title": "Site WAN Gateway Device",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "hostname",
+    "domain",
+    "role",
+    "vendor",
+    "os",
+    "tags",
+    "timezone",
+    "interfaces"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Relative path to the schema definition."
+    },
+    "hostname": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]*[a-z0-9]$"
+    },
+    "domain": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]*[a-z0-9]$"
+    },
+    "role": {
+      "type": "string"
+    },
+    "vendor": {
+      "type": "string",
+      "enum": ["cisco", "juniper"]
+    },
+    "os": {
+      "type": "string",
+      "enum": ["ios", "junos"]
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "timezone": {
+      "type": "string",
+      "pattern": "^[A-Za-z_]+/[A-Za-z_]+$"
+    },
+    "interfaces": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/interface"
+      }
+    }
+  },
+  "$defs": {
+    "interface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ipv4",
+        "role"
+      ],
+      "properties": {
+        "ipv4": {
+          "type": "string",
+          "pattern": "^\\d{1,3}(\\.\\d{1,3}){3}/\\d{1,2}$"
+        },
+        "role": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

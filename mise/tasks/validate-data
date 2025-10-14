@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+#MISE description="Validate site data against JSON schema"
+
+set -euo pipefail
+
+ROOT="$(pwd)"
+SCHEMA="${ROOT}/data/schema"
+
+JSONSCHEMA_BIN="${JSONSCHEMA_BIN:-jsonschema}"
+DEBUG="${DEBUG:-}"
+
+if ! command -v "${JSONSCHEMA_BIN}" >/dev/null 2>&1; then
+  ALT_BIN="/home/bc/.local/share/mise/installs/ubi-sourcemeta-jsonschema/11.10.0/jsonschema"
+  if [ -x "${ALT_BIN}" ]; then
+    JSONSCHEMA_BIN="${ALT_BIN}"
+  else
+    echo "jsonschema CLI not found. Set JSONSCHEMA_BIN or adjust PATH." >&2
+    exit 1
+  fi
+fi
+
+if [ ! -f "${SCHEMA}" ]; then
+  echo "Schema file not found at ${SCHEMA}" >&2
+  exit 1
+fi
+
+mapfile -t INSTANCES < <(find "${ROOT}/data" -mindepth 2 -maxdepth 2 -name "*.json" | sort)
+
+if [ "${#INSTANCES[@]}" -eq 0 ]; then
+  echo "No JSON instances found under data/*" >&2
+  exit 1
+fi
+
+if [ -n "${DEBUG}" ]; then
+  for instance in "${INSTANCES[@]}"; do
+    echo "Validating ${instance}"
+  done
+fi
+
+"${JSONSCHEMA_BIN}" validate "${SCHEMA}" "${INSTANCES[@]}"

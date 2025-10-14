@@ -7,14 +7,7 @@ typos = "latest"
 uv = "latest"
 "ubi:bedecarroll/cfgcut" = "latest"
 "ubi:mitsuhiko/minijinja" = "latest"
+"ubi:sourcemeta/jsonschema" = "latest"
 
 [settings]
 python.uv_venv_auto = true
-
-[tasks.lint]
-description = "Run linters"
-run = ["typos --diff", "ruff check"]
-
-[tasks.lint-fix]
-description = "Run linters"
-run = ["typos -w", "ruff check --fix"]
