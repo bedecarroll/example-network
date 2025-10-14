@@ -1,0 +1,26 @@
+{
+  "$schema": "../schema",
+  "hostname": "wgw01.sfo02",
+  "domain": "example.com",
+  "role": "wan-gateway",
+  "vendor": "juniper",
+  "os": "junos",
+  "tags": [
+    "drained"
+  ],
+  "timezone": "America/Los_Angeles",
+  "interfaces": {
+    "GigabitEthernet1/1": {
+      "ipv4": "10.4.0.1/24",
+      "role": "uplink"
+    },
+    "GigabitEthernet1/2": {
+      "ipv4": "10.4.0.1/24",
+      "role": "uplink"
+    },
+    "Vlan12": {
+      "ipv4": "10.4.1.20/20",
+      "role": "security"
+    }
+  }
+}

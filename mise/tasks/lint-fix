@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Run linters"
+
+typos -w
+ruff check --fix

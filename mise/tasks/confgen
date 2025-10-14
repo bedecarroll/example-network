@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#MISE description="Render device configs from templates"
+
+set -euo pipefail
+
+ROOT="$(pwd)"
+SCHEMA="${ROOT}/data/schema"
+
+JSONSCHEMA_BIN="${JSONSCHEMA_BIN:-jsonschema}"
+if ! command -v "${JSONSCHEMA_BIN}" >/dev/null 2>&1; then
+  ALT_BIN="/home/bc/.local/share/mise/installs/ubi-sourcemeta-jsonschema/11.10.0/jsonschema"
+  if [ -x "${ALT_BIN}" ]; then
+    JSONSCHEMA_BIN="${ALT_BIN}"
+  else
+    echo "jsonschema CLI not found. Set JSONSCHEMA_BIN or adjust PATH." >&2
+    exit 1
+  fi
+fi
+
+MINIJINJA_BIN="${MINIJINJA_BIN:-minijinja}"
+if ! command -v "${MINIJINJA_BIN}" >/dev/null 2>&1; then
+  ALT_MINIJINJA="/home/bc/.local/share/mise/installs/ubi-mitsuhiko-minijinja/latest/minijinja"
+  if [ -x "${ALT_MINIJINJA}" ]; then
+    MINIJINJA_BIN="${ALT_MINIJINJA}"
+  else
+    echo "minijinja CLI not found. Set MINIJINJA_BIN or adjust PATH." >&2
+    exit 1
+  fi
+fi
+
+if [ ! -f "${SCHEMA}" ]; then
+  echo "Schema file not found at ${SCHEMA}" >&2
+  exit 1
+fi
+
+mapfile -t INSTANCES < <(find "${ROOT}/data" -mindepth 2 -maxdepth 2 -name "*.json" | sort)
+
+if [ "${#INSTANCES[@]}" -eq 0 ]; then
+  echo "No JSON data files located under data/*" >&2
+  exit 1
+fi
+
+"${JSONSCHEMA_BIN}" validate "${SCHEMA}" "${INSTANCES[@]}"
+
+OUTPUT_DIR="${ROOT}/generated/full_configs"
+mkdir -p "${OUTPUT_DIR}"
+
+for json_file in "${INSTANCES[@]}"; do
+  os=$(jq -r '.os' "${json_file}")
+  hostname=$(jq -r '.hostname' "${json_file}")
+
+  if [ -z "${os}" ] || [ "${os}" = "null" ]; then
+    echo "${json_file}: os field is required" >&2
+    exit 1
+  fi
+
+  template="${ROOT}/templates/${os}/base.j2"
+  if [ ! -f "${template}" ]; then
+    echo "Template not found for os '${os}' at ${template}" >&2
+    exit 1
+  fi
+
+  output="${OUTPUT_DIR}/${hostname}.conf"
+  "${MINIJINJA_BIN}" "${template}" "${json_file}" > "${output}"
+  if [ -n "${DEBUG:-}" ]; then
+    echo "Rendered ${output} using ${template}"
+  fi
+done
+
+echo "Generated ${#INSTANCES[@]} configuration(s) in ${OUTPUT_DIR}"
