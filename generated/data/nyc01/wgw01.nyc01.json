@@ -1,27 +1,27 @@
 {
-  "$schema": "../schema.json",
-  "hostname": "wgw01.nyc01",
+  "$schema": "../../data/schema.json",
   "domain": "example.com",
-  "role": "wan-gateway",
-  "vendor": "cisco",
-  "serial_number": "<asset>",
-  "os": "ios",
-  "tags": [
-    "drained"
-  ],
-  "timezone": "America/New_York",
+  "hostname": "wgw01.nyc01",
   "interfaces": {
     "GigabitEthernet1/1": {
       "ipv4": "10.2.0.1/24",
       "role": "uplink"
     },
     "GigabitEthernet1/2": {
-      "ipv4": "<ipam>",
+      "ipv4": "10.2.0.1/24",
       "role": "uplink"
     },
     "Vlan12": {
       "ipv4": "10.2.1.20/20",
       "role": "security"
     }
-  }
+  },
+  "os": "ios",
+  "role": "wan-gateway",
+  "serial_number": "FTX5678B01",
+  "tags": [
+    "drained"
+  ],
+  "timezone": "America/New_York",
+  "vendor": "cisco"
 }

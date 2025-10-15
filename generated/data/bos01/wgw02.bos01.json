@@ -1,15 +1,7 @@
 {
-  "$schema": "../schema.json",
-  "hostname": "wgw02.bos01",
+  "$schema": "../../data/schema.json",
   "domain": "example.com",
-  "role": "wan-gateway",
-  "vendor": "cisco",
-  "serial_number": "<asset>",
-  "os": "ios",
-  "tags": [
-    "drained"
-  ],
-  "timezone": "America/New_York",
+  "hostname": "wgw02.bos01",
   "interfaces": {
     "GigabitEthernet1/1": {
       "ipv4": "10.0.0.2/24",
@@ -23,5 +15,13 @@
       "ipv4": "10.1.1.21/20",
       "role": "security"
     }
-  }
+  },
+  "os": "ios",
+  "role": "wan-gateway",
+  "serial_number": "FTX1234A02",
+  "tags": [
+    "drained"
+  ],
+  "timezone": "America/New_York",
+  "vendor": "cisco"
 }

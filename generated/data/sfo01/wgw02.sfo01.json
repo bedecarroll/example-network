@@ -1,15 +1,7 @@
 {
-  "$schema": "../schema.json",
-  "hostname": "wgw02.sfo01",
+  "$schema": "../../data/schema.json",
   "domain": "example.com",
-  "role": "wan-gateway",
-  "vendor": "juniper",
-  "serial_number": "<asset>",
-  "os": "junos",
-  "tags": [
-    "drained"
-  ],
-  "timezone": "America/Los_Angeles",
+  "hostname": "wgw02.sfo01",
   "interfaces": {
     "GigabitEthernet1/1": {
       "ipv4": "10.3.0.2/24",
@@ -23,5 +15,13 @@
       "ipv4": "10.3.1.21/20",
       "role": "security"
     }
-  }
+  },
+  "os": "junos",
+  "role": "wan-gateway",
+  "serial_number": "FTX2468C02",
+  "tags": [
+    "drained"
+  ],
+  "timezone": "America/Los_Angeles",
+  "vendor": "juniper"
 }

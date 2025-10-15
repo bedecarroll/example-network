@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 #MISE description="Generate ACLs"
 
-cd acls && aclgen --output_directory ../generated/acl
+cd acls && aclgen --output_directory ../generated/acls

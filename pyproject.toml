@@ -1,6 +1,6 @@
 [project]
 description = "Example network automation repository"
-name = "netauto-example"
+name = "example-network"
 version = "0.0.1"
 readme = "README.md"
 requires-python = ">=3.12"

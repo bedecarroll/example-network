@@ -4,7 +4,7 @@
 set -euo pipefail
 
 ROOT="$(pwd)"
-SCHEMA="${ROOT}/data/schema"
+SCHEMA="${ROOT}/data/schema.json"
 
 JSONSCHEMA_BIN="${JSONSCHEMA_BIN:-jsonschema}"
 if ! command -v "${JSONSCHEMA_BIN}" >/dev/null 2>&1; then
@@ -33,14 +33,19 @@ if [ ! -f "${SCHEMA}" ]; then
   exit 1
 fi
 
-mapfile -t INSTANCES < <(find "${ROOT}/data" -mindepth 2 -maxdepth 2 -name "*.json" | sort)
+mapfile -t INSTANCES < <(find "${ROOT}/generated/data" -mindepth 2 -maxdepth 2 -name "*.json" | sort)
 
 if [ "${#INSTANCES[@]}" -eq 0 ]; then
-  echo "No JSON data files located under data/*" >&2
+  echo "No JSON data files located under generated/data/*" >&2
   exit 1
 fi
 
-"${JSONSCHEMA_BIN}" validate "${SCHEMA}" "${INSTANCES[@]}"
+CMD=("${JSONSCHEMA_BIN}" "${SCHEMA}")
+for instance in "${INSTANCES[@]}"; do
+  CMD+=("--instance" "${instance}")
+done
+
+"${CMD[@]}"
 
 OUTPUT_DIR="${ROOT}/generated/full_configs"
 mkdir -p "${OUTPUT_DIR}"
