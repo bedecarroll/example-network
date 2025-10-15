@@ -227,7 +227,7 @@ wheels = [
 ]
 
 [[package]]
-name = "netauto-example"
+name = "example-network"
 version = "0.0.1"
 source = { virtual = "." }
 dependencies = [

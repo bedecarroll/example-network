@@ -87,3 +87,32 @@ operated on at once. Ideally you would extend this even further to enable
 ### Monitoring
 
 Typically outside of the purview of device management but none the less important.
+
+### Push safety
+
+In addition to sending configurations to devices it is important to do it in
+a safe manner. This usually entails:
+
+- Network validations (do we have capacity to drain? Is device healthy?)
+- Draining device
+- Copy configuration
+- Commit configurations with rollback
+- Undrain device
+- Post check validations (is device healthy? Are routing protocols happy?)
+
+These complex operations will quickly outgrow what is possible with Github CI.
+
+## Anti-patterns
+
+- Coding inside `Jinja` templates
+- Not extending your data schema as needed
+
+## Setup
+
+```bash
+git clone git@github.com:bedecarroll/example-network.git
+cd example-network
+mise trust
+cd .. && cd example-network
+mise install
+```
