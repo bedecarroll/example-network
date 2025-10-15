@@ -1,5 +1,5 @@
 {
-  "$schema": "../schema.json.json",
+  "$schema": "../schema.json",
   "hostname": "wgw01.bos01",
   "domain": "example.com",
   "role": "wan-gateway",
@@ -23,5 +23,6 @@
       "ipv4": "10.1.1.20/20",
       "role": "security"
     }
-  }
+  },
+  "matches": []
 }

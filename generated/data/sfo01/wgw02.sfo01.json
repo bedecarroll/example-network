@@ -16,6 +16,10 @@
       "role": "security"
     }
   },
+  "matches": [
+    "system|>>|",
+    "interfaces||ge-0/0/1|>>|"
+  ],
   "os": "junos",
   "role": "wan-gateway",
   "serial_number": "FTX2468C02",

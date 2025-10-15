@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+#MISE description="Slice rendered configs into partial configs using cfgcut"
+
+set -euo pipefail
+
+ROOT="$(pwd)"
+DATA_ROOT="${ROOT}/generated/data"
+FULL_CONFIG_ROOT="${ROOT}/generated/full_configs"
+OUTPUT_ROOT="${ROOT}/generated/partial_configs"
+
+CFGCUT_BIN="${CFGCUT_BIN:-cfgcut}"
+if ! command -v "${CFGCUT_BIN}" >/dev/null 2>&1; then
+  ALT_BIN="/home/bc/.local/share/mise/installs/ubi-bedecarroll-cfgcut/latest/cfgcut"
+  if [ -x "${ALT_BIN}" ]; then
+    CFGCUT_BIN="${ALT_BIN}"
+  else
+    echo "cfgcut CLI not found. Set CFGCUT_BIN or adjust PATH." >&2
+    exit 1
+  fi
+fi
+
+if [ ! -d "${DATA_ROOT}" ]; then
+  echo "Expected normalized data at ${DATA_ROOT}. Run generators:data first." >&2
+  exit 1
+fi
+
+if [ ! -d "${FULL_CONFIG_ROOT}" ]; then
+  echo "Rendered configs missing at ${FULL_CONFIG_ROOT}. Run generators:configs first." >&2
+  exit 1
+fi
+
+mapfile -t DATA_FILES < <(find "${DATA_ROOT}" -mindepth 2 -maxdepth 2 -name "*.json" | sort)
+if [ "${#DATA_FILES[@]}" -eq 0 ]; then
+  echo "No JSON data files located under ${DATA_ROOT}." >&2
+  exit 1
+fi
+
+mkdir -p "${OUTPUT_ROOT}"
+
+generated_count=0
+skipped_count=0
+
+for data_file in "${DATA_FILES[@]}"; do
+  hostname="$(jq -r '.hostname // empty' "${data_file}")"
+  if [ -z "${hostname}" ]; then
+    echo "${data_file}: hostname field is required" >&2
+    exit 1
+  fi
+
+  mapfile -t MATCHES < <(jq -r '
+    (.matches // [])
+    | map(select(type == "string" and (.|length) > 0))
+    | .[]
+  ' "${data_file}")
+
+  output_path="${OUTPUT_ROOT}/${hostname}.conf"
+
+  if [ "${#MATCHES[@]}" -eq 0 ]; then
+    rm -f "${output_path}"
+    skipped_count=$((skipped_count + 1))
+    continue
+  fi
+
+  full_config="${FULL_CONFIG_ROOT}/${hostname}.conf"
+  if [ ! -f "${full_config}" ]; then
+    echo "Missing rendered config for ${hostname} at ${full_config}" >&2
+    exit 1
+  fi
+
+  tmp_file="${output_path}.tmp"
+  CMD=("${CFGCUT_BIN}")
+  for match in "${MATCHES[@]}"; do
+    CMD+=("-m" "${match}")
+  done
+  CMD+=("${full_config}")
+
+  if ! "${CMD[@]}" > "${tmp_file}"; then
+    rm -f "${tmp_file}"
+    echo "cfgcut failed for ${hostname} using matches from ${data_file}" >&2
+    exit 1
+  fi
+
+  mv "${tmp_file}" "${output_path}"
+  generated_count=$((generated_count + 1))
+done
+
+echo "Generated ${generated_count} partial configuration(s) in ${OUTPUT_ROOT}"
+if [ "${skipped_count}" -gt 0 ]; then
+  echo "Skipped ${skipped_count} device(s) without matches."
+fi

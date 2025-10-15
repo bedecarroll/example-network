@@ -4,7 +4,7 @@
   "title": "Site WAN Gateway Device",
   "type": "object",
   "additionalProperties": false,
-  "required": ["hostname", "domain", "role", "vendor", "os", "serial_number", "tags", "timezone", "interfaces"],
+  "required": ["hostname", "domain", "role", "vendor", "os", "serial_number", "tags", "timezone", "interfaces", "matches"],
   "properties": {
     "$schema": {
       "type": "string",
@@ -61,6 +61,15 @@
       "additionalProperties": {
         "$ref": "#/$defs/interface"
       }
+    },
+    "matches": {
+      "type": "array",
+      "description": "cfgcut match expressions used to generate partial configurations.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "default": []
     }
   },
   "$defs": {

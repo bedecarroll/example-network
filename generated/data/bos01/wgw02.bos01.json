@@ -16,6 +16,7 @@
       "role": "security"
     }
   },
+  "matches": [],
   "os": "ios",
   "role": "wan-gateway",
   "serial_number": "FTX1234A02",
