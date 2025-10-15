@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup mise
+        uses: jdx/mise-action@v2
+
+      - name: Install toolchain
+        run: mise install
+
+      - name: Sync Python dependencies
+        run: mise exec uv -- uv sync --all-extras --dev --frozen
+
+      - name: Expose virtualenv
+        run: echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
+
+      - name: Run linters
+        run: mise run lint
+
+      - name: Validate data schema
+        run: mise run validate-data
+
+      - name: Generate normalized data
+        run: mise run generators:data
+
+      - name: Generate ACLs
+        run: mise run generators:acls
+
+      - name: Generate device configs
+        run: mise run generators:configs
+
+      - name: Generate partial configs
+        run: mise run generators:partials
+
+      - name: Run tests
+        run: pytest
+
+      - name: Ensure generated artifacts are committed
+        run: git diff --stat && git diff --exit-code
