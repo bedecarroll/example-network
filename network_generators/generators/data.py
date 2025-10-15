@@ -1,10 +1,12 @@
+"""CLI helpers for generating normalized network data files."""
+
 from __future__ import annotations
 
 import json
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Iterable
+from typing import TYPE_CHECKING, Any
 
 import typer
 from loguru import logger
@@ -14,35 +16,54 @@ from network_generators.services.asset import (
     AssetLookupError,
     get_demo_asset_inventory,
 )
-from network_generators.services.ipam import IPAMLookupError, IPAMSimulator, get_demo_ipam
+from network_generators.services.ipam import (
+    IPAMLookupError,
+    IPAMSimulator,
+    get_demo_ipam,
+)
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 TOKEN_PATTERN = re.compile(
     r"^<(?P<resolver>[a-zA-Z0-9_]+)(?:\|(?P<args>[^>]*))?>$",
     re.IGNORECASE,
 )
 DEFAULT_SCHEMA_REFERENCE = "../../data/schema.json"
+SOURCE_DIR_OPTION = typer.Option(
+    Path("data"),
+    "--source",
+    help="Directory containing authoring data files.",
+    show_default=True,
+)
+OUTPUT_DIR_OPTION = typer.Option(
+    Path("generated/data"),
+    "--output",
+    help="Directory for processed data files.",
+    show_default=True,
+)
+SCHEMA_REFERENCE_OPTION = typer.Option(
+    DEFAULT_SCHEMA_REFERENCE,
+    "--schema-reference",
+    help="Value to assign to the $schema property in generated files.",
+    show_default=True,
+)
+IPAM_INTERFACE_REQUIRED_MESSAGE = (
+    "Resolver 'ipam' requires an interface context (value {candidate!r})"
+)
+IPAM_LOOKUP_FAILED_MESSAGE = "{hostname} {interface}: {error}"
+ASSET_LOOKUP_FAILED_MESSAGE = "{hostname}: {error}"
+UNSUPPORTED_RESOLVER_MESSAGE = (
+    "Resolver '{resolver}' is not supported in {candidate!r}"
+)
 
 
 def main(
-    source_dir: Path = typer.Option(
-        Path("data"),
-        "--source",
-        help="Directory containing authoring data files.",
-        show_default=True,
-    ),
-    output_dir: Path = typer.Option(
-        Path("generated/data"),
-        "--output",
-        help="Directory for processed data files.",
-        show_default=True,
-    ),
-    schema_reference: str = typer.Option(
-        DEFAULT_SCHEMA_REFERENCE,
-        "--schema-reference",
-        help="Value to assign to the $schema property in generated files.",
-        show_default=True,
-    ),
+    source_dir: Path = SOURCE_DIR_OPTION,
+    output_dir: Path = OUTPUT_DIR_OPTION,
+    schema_reference: str = SCHEMA_REFERENCE_OPTION,
 ) -> None:
+    """Process source data and write normalized JSON outputs."""
     processor = DataProcessor(
         source_dir=source_dir,
         output_dir=output_dir,
@@ -54,6 +75,8 @@ def main(
 
 
 class DataProcessor:
+    """Coordinate data ingestion, token resolution, and output generation."""
+
     def __init__(
         self,
         *,
@@ -63,6 +86,7 @@ class DataProcessor:
         ipam: IPAMSimulator,
         assets: AssetInventory,
     ) -> None:
+        """Store the configuration and dependency instances for processing."""
         self.source_dir = source_dir
         self.output_dir = output_dir
         self.schema_reference = schema_reference
@@ -70,6 +94,7 @@ class DataProcessor:
         self.assets = assets
 
     def run(self) -> None:
+        """Normalize every discovered JSON source file."""
         files = list(self._iter_source_files())
         if not files:
             logger.warning("No JSON files discovered under {}", self.source_dir)
@@ -90,10 +115,9 @@ class DataProcessor:
         for site_dir in sorted(p for p in self.source_dir.iterdir() if p.is_dir()):
             if site_dir.name == "schema":
                 continue
-            for json_path in sorted(site_dir.glob("*.json")):
-                yield json_path
+            yield from sorted(site_dir.glob("*.json"))
 
-    def _process_file(self, path: Path, *, site: str) -> Dict[str, Any]:
+    def _process_file(self, path: Path, *, site: str) -> dict[str, Any]:
         raw = json.loads(path.read_text())
         processed = deepcopy(raw)
         hostname = processed.get("hostname", "<unknown>")
@@ -135,17 +159,17 @@ class DataProcessor:
 
         if resolver == "ipam":
             if interface is None:
-                raise ValueError(
-                    f"Resolver 'ipam' requires an interface context (value {candidate!r})"
-                )
+                message = IPAM_INTERFACE_REQUIRED_MESSAGE.format(candidate=candidate)
+                raise ValueError(message)
             try:
                 return self.ipam.lookup(
                     site=site, hostname=hostname, interface=interface, arguments=arguments
                 )
             except IPAMLookupError as exc:
-                raise ValueError(
-                    f"{hostname} {interface}: {exc}"
-                ) from exc
+                message = IPAM_LOOKUP_FAILED_MESSAGE.format(
+                    hostname=hostname, interface=interface, error=exc
+                )
+                raise ValueError(message) from exc
 
         if resolver == "asset":
             try:
@@ -153,11 +177,17 @@ class DataProcessor:
                     site=site, hostname=hostname, arguments=arguments
                 )
             except AssetLookupError as exc:
-                raise ValueError(f"{hostname}: {exc}") from exc
+                message = ASSET_LOOKUP_FAILED_MESSAGE.format(
+                    hostname=hostname, error=exc
+                )
+                raise ValueError(message) from exc
 
-        raise ValueError(f"Resolver '{resolver}' is not supported in {candidate!r}")
+        message = UNSUPPORTED_RESOLVER_MESSAGE.format(
+            resolver=resolver, candidate=candidate
+        )
+        raise ValueError(message)
 
-    def _write_output(self, data: Dict[str, Any], site: str, filename: str) -> None:
+    def _write_output(self, data: dict[str, Any], site: str, filename: str) -> None:
         target_dir = self.output_dir / site
         target_dir.mkdir(parents=True, exist_ok=True)
         target = target_dir / filename

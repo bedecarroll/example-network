@@ -1,0 +1,28 @@
+{% for name, attrs in interfaces|dictsort -%}
+{% set parts = attrs.ipv4|split('/')|list -%}
+{% set prefix = parts[1]|int -%}
+{% set mask_calc = namespace(value='') -%}
+{% for idx in range(4) -%}
+{% set remaining = prefix - idx * 8 -%}
+{% if remaining >= 8 -%}
+{% set octet = 255 -%}
+{% elif remaining > 0 -%}
+{% set octet = 255 - (2 ** (8 - remaining) - 1) -%}
+{% else -%}
+{% set octet = 0 -%}
+{% endif -%}
+{% if mask_calc.value -%}
+{% set mask_calc.value = mask_calc.value ~ '.' ~ octet -%}
+{% else -%}
+{% set mask_calc.value = mask_calc.value ~ octet -%}
+{% endif -%}
+{% endfor -%}
+interface {{ name }}
+{%- if 'description' in attrs %}
+ description {{ attrs.description }}
+{%- endif %}
+ ip address {{ parts[0] }} {{ mask_calc.value }}
+ no shutdown
+!
+
+{% endfor %}
