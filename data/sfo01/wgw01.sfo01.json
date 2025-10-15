@@ -23,5 +23,9 @@
       "ipv4": "10.3.1.20/20",
       "role": "security"
     }
-  }
+  },
+  "matches": [
+    "system|>>|",
+    "interfaces||ge-0/0/1|>>|"
+  ]
 }
