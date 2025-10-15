@@ -1,9 +1,18 @@
+"""IPAM simulator helpers for network data generation."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Mapping, MutableMapping
+from typing import TYPE_CHECKING
 
 __all__ = ["IPAMLookupError", "IPAMSimulator", "get_demo_ipam"]
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, MutableMapping
+
+SITE_ARG_INDEX = 0
+HOSTNAME_ARG_INDEX = 1
+INTERFACE_ARG_INDEX = 2
 
 
 class IPAMLookupError(RuntimeError):
@@ -32,11 +41,22 @@ class IPAMSimulator:
         - arguments[1]: alternate hostname (defaults to provided hostname)
         - arguments[2]: alternate interface name (defaults to provided interface)
         """
-
         args = arguments or []
-        site_key = args[0] if len(args) >= 1 and args[0] else site
-        hostname_key = args[1] if len(args) >= 2 and args[1] else hostname
-        interface_key = args[2] if len(args) >= 3 and args[2] else interface
+        site_key = (
+            args[SITE_ARG_INDEX]
+            if len(args) > SITE_ARG_INDEX and args[SITE_ARG_INDEX]
+            else site
+        )
+        hostname_key = (
+            args[HOSTNAME_ARG_INDEX]
+            if len(args) > HOSTNAME_ARG_INDEX and args[HOSTNAME_ARG_INDEX]
+            else hostname
+        )
+        interface_key = (
+            args[INTERFACE_ARG_INDEX]
+            if len(args) > INTERFACE_ARG_INDEX and args[INTERFACE_ARG_INDEX]
+            else interface
+        )
 
         try:
             return self.allocations[site_key][hostname_key][interface_key]
@@ -50,11 +70,10 @@ class IPAMSimulator:
 
 def get_demo_ipam() -> IPAMSimulator:
     """Return an IPAM simulator pre-populated with demonstration data."""
-
     return IPAMSimulator(_DEMO_ALLOCATIONS)
 
 
-_DEMO_ALLOCATIONS: MutableMapping[str, Dict[str, Dict[str, str]]] = {
+_DEMO_ALLOCATIONS: MutableMapping[str, dict[str, dict[str, str]]] = {
     "bos01": {
         "wgw01.bos01": {
             "GigabitEthernet1/1": "10.0.0.1/24",
@@ -81,26 +100,26 @@ _DEMO_ALLOCATIONS: MutableMapping[str, Dict[str, Dict[str, str]]] = {
     },
     "sfo01": {
         "wgw01.sfo01": {
-            "GigabitEthernet1/1": "10.3.0.1/24",
-            "GigabitEthernet1/2": "10.3.0.1/24",
-            "Vlan12": "10.3.1.20/20",
+            "ge-0/0/0": "10.3.0.1/24",
+            "ge-0/0/1": "10.3.0.1/24",
+            "vlan.12": "10.3.1.20/20",
         },
         "wgw02.sfo01": {
-            "GigabitEthernet1/1": "10.3.0.2/24",
-            "GigabitEthernet1/2": "10.3.0.1/24",
-            "Vlan12": "10.3.1.21/20",
+            "ge-0/0/0": "10.3.0.2/24",
+            "ge-0/0/1": "10.3.0.1/24",
+            "vlan.12": "10.3.1.21/20",
         },
     },
     "sfo02": {
         "wgw01.sfo02": {
-            "GigabitEthernet1/1": "10.4.0.1/24",
-            "GigabitEthernet1/2": "10.4.0.1/24",
-            "Vlan12": "10.4.1.20/20",
+            "ge-0/0/0": "10.4.0.1/24",
+            "ge-0/0/1": "10.4.0.1/24",
+            "vlan.12": "10.4.1.20/20",
         },
         "wgw02.sfo02": {
-            "GigabitEthernet1/1": "10.4.0.2/24",
-            "GigabitEthernet1/2": "10.4.0.1/24",
-            "Vlan12": "10.4.1.21/20",
+            "ge-0/0/0": "10.4.0.2/24",
+            "ge-0/0/1": "10.4.0.1/24",
+            "vlan.12": "10.4.1.21/20",
         },
     },
 }

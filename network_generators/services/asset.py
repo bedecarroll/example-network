@@ -1,9 +1,17 @@
+"""Asset inventory helpers for simulated data generation."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping, MutableMapping
+from typing import TYPE_CHECKING
 
-__all__ = ["AssetLookupError", "AssetInventory", "get_demo_asset_inventory"]
+__all__ = ["AssetInventory", "AssetLookupError", "get_demo_asset_inventory"]
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, MutableMapping
+
+SITE_ARG_INDEX = 0
+HOSTNAME_ARG_INDEX = 1
 
 
 class AssetLookupError(RuntimeError):
@@ -24,10 +32,17 @@ class AssetInventory:
         arguments: list[str] | None = None,
     ) -> str:
         """Return the serial number for the given device."""
-
         args = arguments or []
-        site_key = args[0] if len(args) >= 1 and args[0] else site
-        hostname_key = args[1] if len(args) >= 2 and args[1] else hostname
+        site_key = (
+            args[SITE_ARG_INDEX]
+            if len(args) > SITE_ARG_INDEX and args[SITE_ARG_INDEX]
+            else site
+        )
+        hostname_key = (
+            args[HOSTNAME_ARG_INDEX]
+            if len(args) > HOSTNAME_ARG_INDEX and args[HOSTNAME_ARG_INDEX]
+            else hostname
+        )
 
         try:
             return self.assets[site_key][hostname_key]
@@ -40,7 +55,6 @@ class AssetInventory:
 
 def get_demo_asset_inventory() -> AssetInventory:
     """Return an asset inventory pre-populated with demonstration data."""
-
     return AssetInventory(_DEMO_ASSETS)
 
 

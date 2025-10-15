@@ -3,15 +3,15 @@
   "domain": "example.com",
   "hostname": "wgw01.sfo01",
   "interfaces": {
-    "GigabitEthernet1/1": {
+    "ge-0/0/0": {
       "ipv4": "10.3.0.1/24",
       "role": "uplink"
     },
-    "GigabitEthernet1/2": {
+    "ge-0/0/1": {
       "ipv4": "10.3.0.1/24",
       "role": "uplink"
     },
-    "Vlan12": {
+    "vlan.12": {
       "ipv4": "10.3.1.20/20",
       "role": "security"
     }
