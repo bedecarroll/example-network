@@ -8,6 +8,9 @@ This repository is to serve as general guide on how to automate a modern network
 - Easy to maintain
 - Ability for network engineers, not just software engineers to work with
 
+To be clear this repository is not perfect and it is not meant to be. It is
+designed to show concepts in network automation.
+
 ## Directory structure
 
 ```tree
@@ -35,6 +38,7 @@ This repository is to serve as general guide on how to automate a modern network
 - Data validators using Python
 - Multi-system data for templates using Python
 - Ability to slow roll configuration coverage
+- Python hook points for data normalization rules
 
 ## Workflow
 
@@ -52,6 +56,19 @@ This repository is to serve as general guide on how to automate a modern network
 | minijinja | [Github](https://github.com/mitsuhiko/minijinja) | Render device templates |
 | cfgcut | [Github](https://github.com/bedecarroll/cfgcut) | Get only parts of configurations for pushes |
 | mise | [Github](https://github.com/jdx/mise) | Environment setup and task runner |
+
+## Custom data rules
+
+Add Python callables to `network_generators/rules` to adjust device records
+during normalization. Append functions to the `DATA_RULES` list or decorate
+them with `@rule`. Each callable receives a `RuleContext` instance exposing the
+current site, hostname, source path, and mutable device data so logic like
+setting `domain` or clearing `matches` can stay in Python.
+
+The repository ships with sample rules that:
+- Rewrite Juniper device domains to include the site (for example
+  `sfo01.example.com`).
+- Clear `matches` for `wgw01.nyc01` to demonstrate per-device overrides.
 
 ## Limitations
 

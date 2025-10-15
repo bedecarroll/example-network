@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from copy import deepcopy
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -21,6 +22,7 @@ from network_generators.services.ipam import (
     IPAMSimulator,
     get_demo_ipam,
 )
+from network_generators.services.rules import RuleEngine
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -64,14 +66,26 @@ def main(
     schema_reference: str = SCHEMA_REFERENCE_OPTION,
 ) -> None:
     """Process source data and write normalized JSON outputs."""
+    dependencies = ProcessorDependencies(
+        ipam=get_demo_ipam(),
+        assets=get_demo_asset_inventory(),
+    )
     processor = DataProcessor(
         source_dir=source_dir,
         output_dir=output_dir,
         schema_reference=schema_reference,
-        ipam=get_demo_ipam(),
-        assets=get_demo_asset_inventory(),
+        dependencies=dependencies,
     )
     processor.run()
+
+
+@dataclass(slots=True)
+class ProcessorDependencies:
+    """Container for dependencies required by the data processor."""
+
+    ipam: IPAMSimulator
+    assets: AssetInventory
+    rules_engine: RuleEngine | None = None
 
 
 class DataProcessor:
@@ -83,15 +97,15 @@ class DataProcessor:
         source_dir: Path,
         output_dir: Path,
         schema_reference: str,
-        ipam: IPAMSimulator,
-        assets: AssetInventory,
+        dependencies: ProcessorDependencies,
     ) -> None:
         """Store the configuration and dependency instances for processing."""
         self.source_dir = source_dir
         self.output_dir = output_dir
         self.schema_reference = schema_reference
-        self.ipam = ipam
-        self.assets = assets
+        self.ipam = dependencies.ipam
+        self.assets = dependencies.assets
+        self.rules_engine = dependencies.rules_engine or RuleEngine()
 
     def run(self) -> None:
         """Normalize every discovered JSON source file."""
@@ -137,6 +151,12 @@ class DataProcessor:
             processed["serial_number"] = self._resolve_token(
                 serial, site=site, hostname=hostname, interface=None
             )
+
+        self.rules_engine.apply(
+            processed,
+            site=site,
+            source_path=path,
+        )
 
         processed["$schema"] = self.schema_reference
         return processed
