@@ -1,0 +1,111 @@
+<?xml version="1.0" ?>
+<config urldb="paloaltonetworks" version="8.1.0">
+  <devices>
+    <entry name="localhost.localdomain">
+      <vsys>
+        <entry name="vsys1">
+          <application/>
+          <application-group/>
+          <!-- Services -->
+          <service>
+            <entry name="service-accept-web-servers-tcp">
+              <protocol>
+                <tcp>
+                  <port>80,443</port>
+                </tcp>
+              </protocol>
+            </entry>
+          </service>
+          <!-- Rules -->
+          <rulebase>
+            <security>
+              <rules>
+                <entry name="accept-web-servers">
+                  <description>Accept connections to our web servers</description>
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any</member>
+                  </source>
+                  <destination>
+                    <member>WEB_SERVERS</member>
+                  </destination>
+                  <service>
+                    <member>service-accept-web-servers-tcp</member>
+                  </service>
+                  <action>allow</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>trust_untrust_policy-comment-1</member>
+                  </tag>
+                </entry>
+                <entry name="default-deny">
+                  <description>Deny anything else.</description>
+                  <to>
+                    <member>untrust</member>
+                  </to>
+                  <from>
+                    <member>trust</member>
+                  </from>
+                  <source>
+                    <member>any-ipv4</member>
+                  </source>
+                  <destination>
+                    <member>any-ipv4</member>
+                  </destination>
+                  <service>
+                    <member>any</member>
+                  </service>
+                  <action>deny</action>
+                  <rule-type>interzone</rule-type>
+                  <application>
+                    <member>any</member>
+                  </application>
+                  <tag>
+                    <member>trust_untrust_policy-comment-1</member>
+                  </tag>
+                </entry>
+              </rules>
+            </security>
+          </rulebase>
+          <!-- Address Groups -->
+          <address-group>
+            <entry name="WEB_SERVERS">
+              <static>
+                <member>WEB_SERVERS_0</member>
+                <member>WEB_SERVERS_1</member>
+              </static>
+            </entry>
+          </address-group>
+          <!-- Addresses -->
+          <address>
+            <entry name="WEB_SERVERS_0">
+              <description>WEB_SERVERS_0</description>
+              <ip-netmask>10.0.0.1/32</ip-netmask>
+            </entry>
+            <entry name="WEB_SERVERS_1">
+              <description>WEB_SERVERS_1</description>
+              <ip-netmask>10.0.0.2/32</ip-netmask>
+            </entry>
+            <entry name="any-ipv4">
+              <description>Object to match all IPv4 addresses; negate to match all IPv6 addresses.</description>
+              <ip-range>0.0.0.0-255.255.255.255</ip-range>
+            </entry>
+          </address>
+          <tag>
+            <entry name="trust_untrust_policy-comment-1">
+              <comments>Example inbound</comments>
+            </entry>
+          </tag>
+        </entry>
+      </vsys>
+    </entry>
+  </devices>
+</config>
