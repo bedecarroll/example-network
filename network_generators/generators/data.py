@@ -26,6 +26,7 @@ from network_generators.services.rules import RuleEngine
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from network_generators.services.rules import RuleEngineSession
 
 TOKEN_PATTERN = re.compile(
     r"^<(?P<resolver>[a-zA-Z0-9_]+)(?:\|(?P<args>[^>]*))?>$",
@@ -114,10 +115,18 @@ class DataProcessor:
             logger.warning("No JSON files discovered under {}", self.source_dir)
             return
 
+        session = self.rules_engine.create_session()
+        pending_outputs: list[tuple[dict[str, Any], str, str]] = []
+
         for src_path in files:
             rel_site = src_path.parent.name
-            processed = self._process_file(src_path, site=rel_site)
-            self._write_output(processed, rel_site, src_path.name)
+            processed = self._process_file(src_path, site=rel_site, session=session)
+            pending_outputs.append((processed, rel_site, src_path.name))
+
+        session.finalize()
+
+        for processed, rel_site, filename in pending_outputs:
+            self._write_output(processed, rel_site, filename)
 
         logger.info("Processed {} data file(s) into {}", len(files), self.output_dir)
 
@@ -131,7 +140,13 @@ class DataProcessor:
                 continue
             yield from sorted(site_dir.glob("*.json"))
 
-    def _process_file(self, path: Path, *, site: str) -> dict[str, Any]:
+    def _process_file(
+        self,
+        path: Path,
+        *,
+        site: str,
+        session: "RuleEngineSession",
+    ) -> dict[str, Any]:
         raw = json.loads(path.read_text())
         processed = deepcopy(raw)
         hostname = processed.get("hostname", "<unknown>")
@@ -152,10 +167,17 @@ class DataProcessor:
                 serial, site=site, hostname=hostname, interface=None
             )
 
-        self.rules_engine.apply(
+        try:
+            relative_source = path.relative_to(self.source_dir)
+            display_path = str(self.source_dir / relative_source)
+        except ValueError:
+            display_path = str(path)
+
+        session.apply(
             processed,
             site=site,
             source_path=path,
+            display_path=display_path,
         )
 
         processed["$schema"] = self.schema_reference

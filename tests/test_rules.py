@@ -7,18 +7,22 @@ import json
 import sys
 from typing import TYPE_CHECKING
 
+import pytest
+
 from network_generators.generators.data import (
     DataProcessor,
     ProcessorDependencies,
 )
 from network_generators.services.asset import get_demo_asset_inventory
 from network_generators.services.ipam import get_demo_ipam
-from network_generators.services.rules import RuleContext, RuleEngine
+from network_generators.services.rules import (
+    RuleContext,
+    RuleEngine,
+    RuleViolationError,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    import pytest
 
 
 def test_rule_engine_applies_rules(tmp_path: Path) -> None:
@@ -138,3 +142,49 @@ def test_rule_engine_discovers_decorated_rules(
         assert device["domain"] == "nyc01.example.com"
     finally:
         sys.modules.pop("custom_rules", None)
+
+
+def test_fleet_rule_detects_duplicate_ipv4(tmp_path: Path) -> None:
+    """Ensure the built-in fleet rule flags duplicate IPv4 assignments."""
+    engine = RuleEngine()
+    session = engine.create_session()
+
+    device_one = {
+        "hostname": "wgw01.nyc01",
+        "interfaces": {
+            "ge-0/0/0": {"ipv4": "10.2.0.1/24"},
+        },
+    }
+    device_two = {
+        "hostname": "wgw02.nyc01",
+        "interfaces": {
+            "ge-0/0/0": {"ipv4": "10.2.0.1/24"},
+        },
+    }
+
+    src_one = tmp_path / "data" / "nyc01" / "wgw01.json"
+    src_two = tmp_path / "data" / "nyc01" / "wgw02.json"
+    src_one.parent.mkdir(parents=True, exist_ok=True)
+    src_two.parent.mkdir(parents=True, exist_ok=True)
+    src_one.write_text(json.dumps(device_one))
+    src_two.write_text(json.dumps(device_two))
+
+    session.apply(
+        device_one,
+        site="nyc01",
+        source_path=src_one,
+        display_path="data/nyc01/wgw01.json",
+    )
+    session.apply(
+        device_two,
+        site="nyc01",
+        source_path=src_two,
+        display_path="data/nyc01/wgw02.json",
+    )
+
+    with pytest.raises(RuleViolationError) as excinfo:
+        session.finalize()
+
+    message = str(excinfo.value)
+    assert "Duplicate IPv4 addresses detected" in message
+    assert "data/nyc01/wgw01.json::ge-0/0/0" in message
