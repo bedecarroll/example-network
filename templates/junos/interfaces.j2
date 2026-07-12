@@ -1,0 +1,25 @@
+{% set ns = namespace(output='', current=None) -%}
+{% for iface_name, attrs in interfaces|dictsort -%}
+{% set parts = iface_name|split('.')|list -%}
+{% set base = parts[0] -%}
+{% set unit = parts[1] if parts|length > 1 else '0' -%}
+{% if ns.current != base -%}
+{% if ns.current is not none -%}
+{% set ns.output = ns.output ~ '  }' ~ '\n' -%}
+{% endif -%}
+{% set ns.output = ns.output ~ '  ' ~ base ~ ' {' ~ '\n' -%}
+{% set ns.current = base -%}
+{% endif -%}
+{% set ns.output = ns.output ~ '    unit ' ~ unit ~ ' {' ~ '\n' -%}
+{% if 'description' in attrs -%}
+{% set ns.output = ns.output ~ '      description \"' ~ attrs.description ~ '\";' ~ '\n' -%}
+{% endif -%}
+{% set ns.output = ns.output ~ '      family inet {' ~ '\n' -%}
+{% set ns.output = ns.output ~ '        address ' ~ attrs.ipv4 ~ ';' ~ '\n' -%}
+{% set ns.output = ns.output ~ '      }' ~ '\n' -%}
+{% set ns.output = ns.output ~ '    }' ~ '\n' -%}
+{% endfor -%}
+{% if ns.current is not none -%}
+{% set ns.output = ns.output ~ '  }' -%}
+{% endif -%}
+{{ ns.output }}

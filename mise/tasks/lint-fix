@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Auto-fix lint and formatting issues"
+set -euo pipefail
+
+typos -w
+ruff check --fix
+ruff format

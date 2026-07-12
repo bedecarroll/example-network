@@ -1,0 +1,24 @@
+[project]
+description = "Example network automation repository"
+name = "example-network"
+version = "0.0.1"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["typer", "rich", "loguru", "icecream", "aerleon", "minijinja"]
+authors = [{ name = "Bede Carroll" }]
+maintainers = [{ name = "Bede Carroll" }]
+
+[dependency-groups]
+dev = ["pytest", "coverage", "pytest-randomly", "logot[loguru]", "ruff", "ty"]
+
+[tool.pytest.ini_options]
+logot_capturer = "logot.loguru.LoguruCapturer"
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+exclude_also = ["if __name__ == .__main__.:"]
+
+[tool.ruff]
+extend = "../../ruff.toml"

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Run linters and type checker"
+set -euo pipefail
+
+typos --diff
+ruff check
+ruff format --check
+uv run ty check

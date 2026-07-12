@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+#MISE description="Fail when IPv4 addresses are reused across device data"
+
+import json
+import sys
+from collections import defaultdict
+from ipaddress import ip_interface
+from pathlib import Path
+from typing import Any, Dict, List
+
+
+def load_json(path: Path) -> Dict[str, Any]:
+  try:
+    with path.open("r", encoding="utf-8") as handle:
+      return json.load(handle)
+  except json.JSONDecodeError as exc:
+    raise ValueError(f"Invalid JSON in {path}: {exc}") from exc
+
+
+def collect_ipv4_assignments(data_root: Path) -> Dict[str, List[str]]:
+  assignments: Dict[str, List[str]] = defaultdict(list)
+  errors: List[str] = []
+
+  for json_file in sorted(data_root.rglob("*.json")):
+    record = load_json(json_file)
+    hostname = record.get("hostname") or json_file.stem
+    interfaces = record.get("interfaces")
+
+    if not isinstance(interfaces, dict):
+      continue
+
+    for iface_name, iface_data in interfaces.items():
+      if not isinstance(iface_data, dict):
+        continue
+
+      raw = iface_data.get("ipv4")
+      if not raw:
+        continue
+
+      try:
+        parsed = ip_interface(str(raw))
+      except ValueError as exc:
+        errors.append(f"{json_file}: interface {iface_name} has invalid IPv4 '{raw}': {exc}")
+        continue
+
+      if parsed.version != 4:
+        errors.append(f"{json_file}: interface {iface_name} has non-IPv4 address '{raw}'")
+        continue
+
+      key = parsed.ip.exploded
+      source = f"{json_file.relative_to(data_root.parent)}::{iface_name} ({hostname}, {parsed.with_prefixlen})"
+      assignments[key].append(source)
+
+  if errors:
+    raise ValueError("\n".join(errors))
+
+  return assignments
+
+
+def main() -> int:
+  root = Path(__file__).resolve().parents[3]
+  data_root = root / "data"
+
+  if not data_root.is_dir():
+    print(f"Data directory not found at {data_root}", file=sys.stderr)
+    return 1
+
+  try:
+    assignments = collect_ipv4_assignments(data_root)
+  except ValueError as exc:
+    print(str(exc), file=sys.stderr)
+    return 1
+
+  duplicates = {ip: entries for ip, entries in assignments.items() if len(entries) > 1}
+
+  if duplicates:
+    print("Duplicate IPv4 addresses detected:", file=sys.stderr)
+    for ip, entries in sorted(duplicates.items()):
+      print(f"  {ip}", file=sys.stderr)
+      for entry in entries:
+        print(f"    {entry}", file=sys.stderr)
+    return 1
+
+  print("No duplicate IPv4 addresses found.")
+  return 0
+
+
+if __name__ == "__main__":
+  sys.exit(main())

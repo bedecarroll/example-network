@@ -1,0 +1,135 @@
+# Network automation example repository
+
+This repository is to serve as general guide on how to automate a modern network.
+
+## Goals
+
+- Easy to reason about
+- Easy to maintain
+- Ability for network engineers, not just software engineers to work with
+
+To be clear this repository is not perfect and it is not meant to be. It is
+designed to show concepts in network automation.
+
+## Directory structure
+
+```tree
+.
+├── acls                # This is where aerleon works from
+│   ├── def             # 
+│   └── policies
+│       └── pol
+├── data                # Your data that will be used for templates
+├── generated           # Finished products
+│   ├── acl
+│   ├── data
+│   ├── full_configs
+│   └── push
+├── templates
+│   ├── ios
+│   └── junos
+```
+
+## Features
+
+- `JSON` based data system
+- `ACL` generation and automation using `Aerleon`
+- Device configuration using `Jinja` templates
+- Data validators using Python
+- Multi-system data for templates using Python
+- Ability to slow roll configuration coverage
+- Python hook points for data normalization rules
+
+## Workflow
+
+### Add a new device
+
+### Generate ACLs
+
+### Add a new field
+
+## Tools
+
+| Tool | URL | Used for |
+|---|---|---|
+| aerleon | [Github](https://github.com/aerleon/aerleon) | `ACL` generation |
+| minijinja | [Github](https://github.com/mitsuhiko/minijinja) | Render device templates |
+| cfgcut | [Github](https://github.com/bedecarroll/cfgcut) | Get only parts of configurations for pushes |
+| mise | [Github](https://github.com/jdx/mise) | Environment setup and task runner |
+
+## Custom data rules
+
+Add Python callables to `network_generators/rules` to adjust device records
+during normalization. Append functions to the `DATA_RULES` list or decorate
+them with `@rule`. Each callable receives a `RuleContext` instance exposing the
+current site, hostname, source path, and mutable device data so logic like
+setting `domain` or clearing `matches` can stay in Python.
+
+The repository ships with sample rules that:
+- Rewrite Juniper device domains to include the site (for example
+  `sfo01.example.com`).
+- Clear `matches` for `wgw01.nyc01` to demonstrate per-device overrides.
+
+## Limitations
+
+This repo does not represent a full end to end automation platform. Ideally
+a lot of the components in this repo would not happen through CI but with
+proper systems that are more tightly coupled.
+
+### Cardinality
+
+You will need a system to provide a semaphore for each device. This will allow
+you to ensure you don't push to 1,000 devices at the same time and cause an
+outage. Generally a system like this has a way to "slice" the network.
+Typically this is via site and device role. You will then be able to write
+rules like:
+
+```yaml
+# Concurrent limits by role
+global:
+  dgw: 100
+  wgw: 10
+
+# Further limits by site
+site:
+  dgw: 10
+  wgw: 1
+```
+
+These rules can be read as, devices with a role of `dgw` can do 100 operations
+in the network but if you have 50 `dgw` devices in a single site only 10 can be
+operated on at once. Ideally you would extend this even further to enable
+`anti-affinity` rules so `HSRP` pairs cannot be operated on at once.
+
+### Monitoring
+
+Typically outside of the purview of device management but none the less important.
+
+### Push safety
+
+In addition to sending configurations to devices it is important to do it in
+a safe manner. This usually entails:
+
+- Network validations (do we have capacity to drain? Is device healthy?)
+- Draining device
+- Copy configuration
+- Commit configurations with rollback
+- Undrain device
+- Post check validations (is device healthy? Are routing protocols happy?)
+
+These complex operations will quickly outgrow what is possible with Github CI.
+
+## Anti-patterns
+
+- Coding inside `Jinja` templates
+- Not extending your data schema as needed
+
+## Setup
+
+```bash
+git clone git@github.com:bedecarroll/example-network.git
+cd example-network
+mise trust
+cd .. && cd example-network
+mise install
+```

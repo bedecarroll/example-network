@@ -1,0 +1,7 @@
+min_version = "2025.9.10"
+
+[tools]
+"ubi:bedecarroll/cfgcut" = "latest"
+"ubi:mitsuhiko/minijinja" = "latest"
+"ubi:sourcemeta/jsonschema" = "latest"
+

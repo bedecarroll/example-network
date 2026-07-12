@@ -1,0 +1,31 @@
+{
+  "$schema": "../../data/schema.json",
+  "domain": "example.com",
+  "hostname": "wgw02.sfo01",
+  "interfaces": {
+    "ge-0/0/0": {
+      "ipv4": "10.3.0.2/24",
+      "role": "uplink"
+    },
+    "ge-0/0/1": {
+      "ipv4": "10.3.0.1/24",
+      "role": "uplink"
+    },
+    "vlan.12": {
+      "ipv4": "10.3.1.21/20",
+      "role": "security"
+    }
+  },
+  "matches": [
+    "system|>>|",
+    "interfaces||ge-0/0/1|>>|"
+  ],
+  "os": "junos",
+  "role": "wan-gateway",
+  "serial_number": "FTX2468C02",
+  "tags": [
+    "drained"
+  ],
+  "timezone": "America/Los_Angeles",
+  "vendor": "juniper"
+}
