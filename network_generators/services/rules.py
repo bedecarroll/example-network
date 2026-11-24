@@ -87,7 +87,7 @@ class RuleEngine:
 
 def rule(func: Rule) -> Rule:
     """Mark a callable as a rule."""
-    func.__network_rule__ = True  # ty: ignore[unresolved-attribute]
+    func.__network_rule__ = True  # ty: ignore[missing-attribute]
     return func
 
 
